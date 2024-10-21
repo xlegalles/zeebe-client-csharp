@@ -33,7 +33,7 @@ public class JobWorkerBuilder(
     : IJobWorkerBuilderStep1, IJobWorkerBuilderStep2, IJobWorkerBuilderStep3
 {
     internal TimeSpan PollingInterval { get; private set; }
-    internal AsyncJobHandler? JobHandler { get; set; }
+    internal AsyncJobHandler? JobHandler { get; private set; }
     internal bool AutoCompletionEnabled { get; private set; }
     internal JobActivator Activator { get; } = new (gatewayClient);
     internal ActivateJobsRequest Request { get; } = new ();

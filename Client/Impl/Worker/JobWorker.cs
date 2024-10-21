@@ -50,7 +50,7 @@ public sealed class JobWorker : IJobWorker
         jobWorkerBuilder = builder;
         source = new CancellationTokenSource();
         logger = builder.LoggerFactory?.CreateLogger<JobWorker>();
-        jobHandler = jobWorkerBuilder.JobHandler;
+        jobHandler = jobWorkerBuilder.JobHandler ?? throw new ArgumentNullException(nameof(jobWorkerBuilder.JobHandler));
         autoCompletion = builder.AutoCompletionEnabled;
         pollInterval = jobWorkerBuilder.PollingInterval;
         activateJobsRequest = jobWorkerBuilder.Request;
