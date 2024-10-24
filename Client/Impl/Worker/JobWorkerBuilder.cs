@@ -140,7 +140,7 @@ public sealed class JobWorkerBuilder(
     {
         var worker = new JobWorker(this);
 
-        worker.Open();
+        worker.Open(JobClient);
 
         return worker;
     }
