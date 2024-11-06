@@ -50,9 +50,8 @@ public sealed class ZeebeClient : IZeebeClient
     private volatile Gateway.GatewayClient gatewayClient;
     private readonly IAsyncRetryStrategy asyncRetryStrategy;
 
-    internal ZeebeClient(string address, TimeSpan? keepAlive, Func<int, TimeSpan> sleepDurationProvider, ILoggerFactory? loggerFactory = null,
-        GrpcChannel? grpcChannel = null)
-        : this(address, ChannelCredentials.Insecure, keepAlive, sleepDurationProvider, loggerFactory, grpcChannel: grpcChannel)
+    internal ZeebeClient(string address, TimeSpan? keepAlive, Func<int, TimeSpan>? sleepDurationProvider, ILoggerFactory? loggerFactory = null)
+        : this(address, ChannelCredentials.Insecure, keepAlive, sleepDurationProvider, loggerFactory)
     { }
 
     internal ZeebeClient(string address,
@@ -61,8 +60,7 @@ public sealed class ZeebeClient : IZeebeClient
         Func<int, TimeSpan>? sleepDurationProvider,
         ILoggerFactory? loggerFactory = null,
         X509Certificate2? certificate = null,
-        bool allowUntrusted = false,
-        GrpcChannel? grpcChannel = null)
+        bool allowUntrusted = false)
     {
         this.loggerFactory = loggerFactory;
         var logger = loggerFactory?.CreateLogger<ZeebeClient>();
@@ -80,7 +78,7 @@ public sealed class ZeebeClient : IZeebeClient
             sslOptions.RemoteCertificateValidationCallback = (_, _, _, _) => true;
         }
 
-        channelToGateway = grpcChannel ?? BuildChannelToGateway();
+        channelToGateway = BuildChannelToGateway();
 
         var callInvoker = channelToGateway.Intercept(new UserAgentInterceptor());
         gatewayClient = new Gateway.GatewayClient(callInvoker);

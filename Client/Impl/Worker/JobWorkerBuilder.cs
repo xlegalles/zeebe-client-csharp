@@ -13,6 +13,8 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,16 +29,16 @@ namespace Zeebe.Client.Impl.Worker;
 public class JobWorkerBuilder(
     IZeebeClient zeebeClient,
     Gateway.GatewayClient gatewayClient,
-    ILoggerFactory loggerFactory = null)
+    ILoggerFactory? loggerFactory = null)
     : IJobWorkerBuilderStep1, IJobWorkerBuilderStep2, IJobWorkerBuilderStep3
 {
-    private TimeSpan pollInterval;
-    private AsyncJobHandler asyncJobHandler;
-    private bool autoCompletion;
+    internal TimeSpan PollingInterval { get; private set; }
+    internal AsyncJobHandler? JobHandler { get; private set; }
+    internal bool AutoCompletionEnabled { get; private set; }
     internal JobActivator Activator { get; } = new (gatewayClient);
     internal ActivateJobsRequest Request { get; } = new ();
     internal byte ThreadCount { get; set; } = 1;
-    internal ILoggerFactory LoggerFactory { get; } = loggerFactory;
+    internal ILoggerFactory? LoggerFactory { get; } = loggerFactory;
     internal IJobClient JobClient { get; } = zeebeClient;
 
     public IJobWorkerBuilderStep2 JobType(string type)
@@ -47,13 +49,13 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 Handler(JobHandler handler)
     {
-        asyncJobHandler = (c, j) => Task.Run(() => handler.Invoke(c, j));
+        JobHandler = (c, j) => Task.Run(() => handler.Invoke(c, j));
         return this;
     }
 
     public IJobWorkerBuilderStep3 Handler(AsyncJobHandler handler)
     {
-        asyncJobHandler = handler;
+        JobHandler = handler;
         return this;
     }
 
@@ -66,11 +68,6 @@ public class JobWorkerBuilder(
     public IJobWorkerBuilderStep3 TenantIds(params string[] tenantIds)
     {
         return TenantIds(tenantIds.ToList());
-    }
-
-    internal AsyncJobHandler Handler()
-    {
-        return asyncJobHandler;
     }
 
     public IJobWorkerBuilderStep3 Timeout(TimeSpan timeout)
@@ -105,13 +102,8 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 PollInterval(TimeSpan pollInterval)
     {
-        this.pollInterval = pollInterval;
+        PollingInterval = pollInterval;
         return this;
-    }
-
-    internal TimeSpan PollInterval()
-    {
-        return pollInterval;
     }
 
     public IJobWorkerBuilderStep3 PollingTimeout(TimeSpan pollingTimeout)
@@ -122,7 +114,7 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 AutoCompletion()
     {
-        autoCompletion = true;
+        AutoCompletionEnabled = true;
         return this;
     }
 
@@ -136,11 +128,6 @@ public class JobWorkerBuilder(
 
         ThreadCount = threadCount;
         return this;
-    }
-
-    internal bool AutoCompletionEnabled()
-    {
-        return autoCompletion;
     }
 
     public IJobWorker Open()

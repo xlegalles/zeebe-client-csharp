@@ -12,7 +12,7 @@
 //    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
-
+#nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +32,7 @@ public sealed class JobWorker : IJobWorker
         "Job worker '{0}' tried to handle job of type '{1}', but exception occured '{2}'";
 
     private readonly CancellationTokenSource source;
-    private readonly ILogger<JobWorker> logger;
+    private readonly ILogger<JobWorker>? logger;
     private readonly JobWorkerBuilder jobWorkerBuilder;
     private readonly ActivateJobsRequest activateJobsRequest;
     private readonly JobActivator jobActivator;
@@ -50,9 +50,9 @@ public sealed class JobWorker : IJobWorker
         jobWorkerBuilder = builder;
         source = new CancellationTokenSource();
         logger = builder.LoggerFactory?.CreateLogger<JobWorker>();
-        jobHandler = jobWorkerBuilder.Handler();
-        autoCompletion = builder.AutoCompletionEnabled();
-        pollInterval = jobWorkerBuilder.PollInterval();
+        jobHandler = jobWorkerBuilder.JobHandler ?? throw new ArgumentNullException(nameof(jobWorkerBuilder.JobHandler));
+        autoCompletion = builder.AutoCompletionEnabled;
+        pollInterval = jobWorkerBuilder.PollingInterval;
         activateJobsRequest = jobWorkerBuilder.Request;
         jobActivator = jobWorkerBuilder.Activator;
         maxJobsActive = jobWorkerBuilder.Request.MaxJobsToActivate;
@@ -65,7 +65,7 @@ public sealed class JobWorker : IJobWorker
         source.Cancel();
         // delay disposing, since poll and handler take some time to close
         Task.Delay(TimeSpan.FromMilliseconds(pollInterval.TotalMilliseconds * 2))
-            .ContinueWith(t =>
+            .ContinueWith(_ =>
             {
                 logger?.LogError("Dispose source");
                 source.Dispose();
@@ -99,7 +99,7 @@ public sealed class JobWorker : IJobWorker
         var input = new BufferBlock<IJob>(bufferOptions);
         var transformer = new TransformBlock<IJob, IJob>(async activatedJob => await HandleActivatedJob(activatedJob, cancellationToken),
             executionOptions);
-        var output = new ActionBlock<IJob>(activatedJob =>
+        var output = new ActionBlock<IJob>(_ =>
             {
                 Interlocked.Decrement(ref currentJobsActive);
             },
@@ -111,11 +111,11 @@ public sealed class JobWorker : IJobWorker
         // Start polling
         Task.Run(async () => await PollJobs(input, cancellationToken),
             cancellationToken).ContinueWith(
-            t => logger?.LogError(t.Exception, "Job polling failed."),
+            t => logger?.LogError(t.Exception, "Job polling failed"),
             TaskContinuationOptions.OnlyOnFaulted);
 
         logger?.LogDebug(
-            "Job worker ({worker}) for job type {type} has been opened.",
+            "Job worker ({Worker}) for job type {Type} has been opened",
             activateJobsRequest.Worker,
             activateJobsRequest.Type);
     }
@@ -172,7 +172,7 @@ public sealed class JobWorker : IJobWorker
     private async Task HandleActivationResponse(ITargetBlock<IJob> input, IActivateJobsResponse response, int jobCount)
     {
         logger?.LogDebug(
-            "Job worker ({worker}) activated {activatedCount} of {requestCount} successfully.",
+            "Job worker ({Worker}) activated {ActivatedCount} of {RequestCount} successfully",
             activateJobsRequest.Worker,
             response.Jobs.Count,
             jobCount);
@@ -213,7 +213,7 @@ public sealed class JobWorker : IJobWorker
             _ => LogLevel.Error
         };
 
-        logger?.Log(logLevel, rpcException, "Unexpected RpcException on polling new jobs.");
+        logger?.Log(logLevel, rpcException, "Unexpected RpcException on polling new jobs");
     }
 
     private async Task TryToAutoCompleteJob(JobClientWrapper jobClient, IJob activatedJob,
@@ -222,7 +222,7 @@ public sealed class JobWorker : IJobWorker
         if (!jobClient.ClientWasUsed && autoCompletion)
         {
             logger?.LogDebug(
-                "Job worker ({worker}) will auto complete job with key '{key}'",
+                "Job worker ({Worker}) will auto complete job with key '{Key}'",
                 activateJobsRequest.Worker,
                 activatedJob.Key);
             await jobClient.NewCompleteJobCommand(activatedJob)
@@ -248,7 +248,7 @@ public sealed class JobWorker : IJobWorker
                 {
                     if (task.IsFaulted)
                     {
-                        logger?.LogError("Problem on failing job occured.", task.Exception);
+                        logger?.LogError(task.Exception, "Problem on failing job occured");
                     }
                 }, cancellationToken);
     }
