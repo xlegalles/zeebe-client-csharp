@@ -47,8 +47,8 @@ public interface IJobClient
     ///     activity and continue the flow.
     /// </para>
     ///
-    /// <param name="jobKey">the key which identifies the job</param>
-    /// <returns>a builder for the command</returns>
+    /// <param name="jobKey">the key which identifies the job.</param>
+    /// <returns>a builder for the command.</returns>
     ICompleteJobCommandStep1 NewCompleteJobCommand(long jobKey);
 
     /// <summary>
@@ -71,8 +71,8 @@ public interface IJobClient
     ///     activity and continue the flow.
     /// </para>
     ///
-    /// <param name="activatedJob">the job, which should be completed</param>
-    /// <returns>a builder for the command</returns>
+    /// <param name="activatedJob">the job, which should be completed.</param>
+    /// <returns>a builder for the command.</returns>
     ICompleteJobCommandStep1 NewCompleteJobCommand(IJob activatedJob);
 
     /// <summary>
@@ -94,8 +94,8 @@ public interface IJobClient
     ///     If the given retries are greater than zero then this job will be picked up again by a job
     ///     worker. Otherwise, an incident is created for this job.
     /// </para>
-    /// <param name="jobKey">the key which identifies the job</param>
-    /// <returns>a builder for the command</returns>
+    /// <param name="jobKey">the key which identifies the job.</param>
+    /// <returns>a builder for the command.</returns>
     IFailJobCommandStep1 NewFailCommand(long jobKey);
 
     /// <summary>
@@ -112,7 +112,7 @@ public interface IJobClient
     ///     .Send();
     /// </code>
     /// </example>
-    /// <param name="jobKey">the key which identifies the job</param>
-    /// <returns>a builder for the command</returns>
+    /// <param name="jobKey">the key which identifies the job.</param>
+    /// <returns>a builder for the command.</returns>
     IThrowErrorCommandStep1 NewThrowErrorCommand(long jobKey);
 }
