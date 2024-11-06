@@ -246,6 +246,37 @@ public interface IJobWorkerBuilderStep3 : ITenantIdsCommandStep<IJobWorkerBuilde
     IJobWorkerBuilderStep3 HandlerThreads(byte threadCount);
 
     /// <summary>
+    /// Opt-in feature flag to enable job streaming. If set as enabled, the job worker will use a mix
+    /// of streaming and polling to activate jobs. A long living stream will be opened onto which
+    /// jobs will be eagerly pushed, and the polling mechanism will be used strictly to fetch jobs
+    /// created <em>before</em> any streams were opened.
+    /// <p>If the stream is closed, e.g. the server closed the connection, was restarted, etc., it
+    /// will be immediately recreated as long as the worker is opened.
+    /// </p>
+    /// <p>NOTE: Job streaming is still under active development, and should be disabled if you
+    /// notice any issues.
+    /// </p>
+    /// </summary>
+    /// <param name="streamEnabled">Enable or disable streaming.</param>
+    /// <returns>the builder for this worker.</returns>
+    IJobWorkerBuilderStep3 StreamEnabled(bool streamEnabled);
+
+    /// <summary>
+    /// If streaming is enabled, sets a maximum lifetime for a given stream. Once this timeout is
+    /// reached, the stream is closed, such that no more jobs are activated and received. If the
+    /// worker is still open, then it will immediately open a new stream.
+    /// <p>With no timeout, the stream will live as long as the client, or until the server closes
+    /// the connection.
+    /// </p>
+    /// <p>It's recommended to set a relatively long timeout, to allow for streams to load balance
+    /// properly across your gateways.
+    /// </p>
+    /// </summary>
+    /// <param name="streamingTimeout">A timeout, after which the stream is recreated.</param>
+    /// <returns>the builder for this worker.</returns>
+    IJobWorkerBuilderStep3 StreamingTimeout(TimeSpan streamingTimeout);
+
+    /// <summary>
     /// Open the worker and start to work on available tasks.
     /// </summary>
     /// <returns>the worker.</returns>

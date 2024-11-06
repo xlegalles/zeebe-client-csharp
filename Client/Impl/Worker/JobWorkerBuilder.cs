@@ -46,6 +46,9 @@ public sealed class JobWorkerBuilder(
     internal int MaxJobsToActivate { get; private set; }
     internal List<string> JobFetchVariable { get; } = new ();
     internal long RequestTimeoutInMilliseconds { get; private set; }
+    internal bool StreamingEnabled { get; private set; }
+    internal TimeSpan StreamTimeout { get; private set; } = TimeSpan.FromHours(8);
+
 
     public IJobWorkerBuilderStep2 JobType(string type)
     {
@@ -133,6 +136,18 @@ public sealed class JobWorkerBuilder(
         }
 
         ThreadCount = threadCount;
+        return this;
+    }
+
+    public IJobWorkerBuilderStep3 StreamEnabled(bool streamEnabled)
+    {
+        StreamingEnabled = streamEnabled;
+        return this;
+    }
+
+    public IJobWorkerBuilderStep3 StreamingTimeout(TimeSpan streamingTimeout)
+    {
+        StreamTimeout = streamingTimeout;
         return this;
     }
 
