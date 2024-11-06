@@ -9,7 +9,7 @@ using Zeebe.Client.Api.Builder;
 
 namespace Zeebe.Client.Impl.Builder;
 
-public class ZeebeClientBuilder : IZeebeClientBuilder, IZeebeClientTransportBuilder
+public record ZeebeClientBuilder : IZeebeClientBuilder, IZeebeClientTransportBuilder
 {
     private ILoggerFactory? LoggerFactory { get; set; }
     private string? GatewayAddress { get; set; }

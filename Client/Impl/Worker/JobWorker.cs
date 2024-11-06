@@ -53,9 +53,18 @@ public sealed class JobWorker : IJobWorker
         jobHandler = jobWorkerBuilder.JobHandler ?? throw new ArgumentNullException(nameof(jobWorkerBuilder.JobHandler));
         autoCompletion = builder.AutoCompletionEnabled;
         pollInterval = jobWorkerBuilder.PollingInterval;
-        activateJobsRequest = jobWorkerBuilder.Request;
+        activateJobsRequest = new ActivateJobsRequest
+        {
+            Type = builder.JobWorkerType ?? throw new ArgumentNullException(nameof(builder.JobWorkerType)),
+            Timeout = builder.JobTimeoutInMilliseconds,
+            Worker = builder.WorkerName ?? throw new ArgumentNullException(nameof(builder.WorkerName)),
+            MaxJobsToActivate = builder.MaxJobsToActivate,
+            RequestTimeout = builder.RequestTimeoutInMilliseconds
+        };
+        activateJobsRequest.FetchVariable.AddRange(jobWorkerBuilder.JobFetchVariable);
+        activateJobsRequest.TenantIds.AddRange(jobWorkerBuilder.CustomTenantIds);
         jobActivator = jobWorkerBuilder.Activator;
-        maxJobsActive = jobWorkerBuilder.Request.MaxJobsToActivate;
+        maxJobsActive = jobWorkerBuilder.MaxJobsToActivate;
         thresholdJobsActivation = maxJobsActive * 0.6;
     }
 

@@ -26,7 +26,7 @@ using Zeebe.Client.Impl.Commands;
 
 namespace Zeebe.Client.Impl.Worker;
 
-public class JobWorkerBuilder(
+public sealed class JobWorkerBuilder(
     IZeebeClient zeebeClient,
     Gateway.GatewayClient gatewayClient,
     ILoggerFactory? loggerFactory = null)
@@ -36,14 +36,20 @@ public class JobWorkerBuilder(
     internal AsyncJobHandler? JobHandler { get; private set; }
     internal bool AutoCompletionEnabled { get; private set; }
     internal JobActivator Activator { get; } = new (gatewayClient);
-    internal ActivateJobsRequest Request { get; } = new ();
     internal byte ThreadCount { get; set; } = 1;
     internal ILoggerFactory? LoggerFactory { get; } = loggerFactory;
     internal IJobClient JobClient { get; } = zeebeClient;
+    internal string? JobWorkerType { get; set; }
+    internal List<string> CustomTenantIds { get; } = new ();
+    internal long JobTimeoutInMilliseconds { get; private set; }
+    internal string? WorkerName { get; private set; }
+    internal int MaxJobsToActivate { get; private set; }
+    internal List<string> JobFetchVariable { get; } = new ();
+    internal long RequestTimeoutInMilliseconds { get; private set; }
 
     public IJobWorkerBuilderStep2 JobType(string type)
     {
-        Request.Type = type;
+        JobWorkerType = type;
         return this;
     }
 
@@ -61,7 +67,7 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 TenantIds(IList<string> tenantIds)
     {
-        Request.TenantIds.AddRange(tenantIds);
+        CustomTenantIds.AddRange(tenantIds);
         return this;
     }
 
@@ -72,31 +78,31 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 Timeout(TimeSpan timeout)
     {
-        Request.Timeout = (long) timeout.TotalMilliseconds;
+        JobTimeoutInMilliseconds = (long) timeout.TotalMilliseconds;
         return this;
     }
 
     public IJobWorkerBuilderStep3 Name(string workerName)
     {
-        Request.Worker = workerName;
+        WorkerName = workerName;
         return this;
     }
 
     public IJobWorkerBuilderStep3 MaxJobsActive(int maxJobsActive)
     {
-        Request.MaxJobsToActivate = maxJobsActive;
+        MaxJobsToActivate = maxJobsActive;
         return this;
     }
 
     public IJobWorkerBuilderStep3 FetchVariables(IList<string> fetchVariables)
     {
-        Request.FetchVariable.AddRange(fetchVariables);
+        JobFetchVariable.AddRange(fetchVariables);
         return this;
     }
 
     public IJobWorkerBuilderStep3 FetchVariables(params string[] fetchVariables)
     {
-        Request.FetchVariable.AddRange(fetchVariables);
+        JobFetchVariable.AddRange(fetchVariables);
         return this;
     }
 
@@ -108,7 +114,7 @@ public class JobWorkerBuilder(
 
     public IJobWorkerBuilderStep3 PollingTimeout(TimeSpan pollingTimeout)
     {
-        Request.RequestTimeout = (long) pollingTimeout.TotalMilliseconds;
+        RequestTimeoutInMilliseconds = (long) pollingTimeout.TotalMilliseconds;
         return this;
     }
 
